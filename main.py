@@ -19,10 +19,7 @@ resolutions = [
 ]
 
 
-
-
-
-class Garticeasy:
+class DrawInEasy:
     currentState = NO_STATE
     screen_resolution = None
 
@@ -238,4 +235,4 @@ class Garticeasy:
                 mouse_controller.release(Button.left)
 
 if __name__ == '__main__':
-    Garticeasy().__init__()
+    DrawInEasy().__init__()
