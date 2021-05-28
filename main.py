@@ -12,7 +12,7 @@ NO_STATE = None
 FIRST_POINT_STATE = 1
 SECOND_POINT_STATE = 2
 
-GARTIC_PEN_RADIUS = 2
+PEN_RADIUS = 3
 
 resolutions = [
     '2560x1440'
@@ -96,34 +96,23 @@ class DrawInEasy:
         else:
             print('Error -> only png, jpeg and jpg are allowed')
 
-    def remove_transparency(self):
-        if self.base_picture.mode in ('RGBA', 'LA') or \
-                (self.base_picture.mode == 'P' and 'transparency' in self.base_picture.info):
-            base_background = (255, 255, 255)
-            # Need to convert to RGBA if LA format due to a bug in PIL (http://stackoverflow.com/a/1963146)
-            alpha = self.base_picture.convert('RGBA').split()[-1]
-            # Create a new background image of our matt color.
-            # Must be RGBA because paste requires both images have the same format
-            # (http://stackoverflow.com/a/8720632  and  http://stackoverflow.com/a/9459208)
-            rgba = Image.new('RGBA', self.base_picture.size, base_background + (255,))
-            rgba.paste(self.base_picture, mask=alpha)
-            rgb = Image.new('RGB', rgba.size, (255, 255, 255))
-            rgb.paste(rgba, mask=rgba.split()[3])  # 3 is the alpha channel
-            self.base_picture = rgb
-        else:
-            self.base_picture = self.base_picture.convert('RGB')
+    def is_picture_contains_transparency(self):
+        return self.base_picture.mode in ('RGBA', 'LA') \
+               or (self.base_picture.mode == 'P' and 'transparency' in self.base_picture.info)
 
     def pre_draw_picture(self):
         print('Making calculations with your picture, please wait...')
-        self.remove_transparency()
+        if not self.is_picture_contains_transparency():  # force the type to be rgba and using a 3pixel-alpha tuple
+            self.base_picture = self.base_picture.convert('RGBA')
         width = self.secondPicCoordinates[0] - self.firstPicCoordinates[0]
         height = self.secondPicCoordinates[1] - self.firstPicCoordinates[1]
         self.base_picture.thumbnail((width, height), Image.ANTIALIAS)
         self.width, self.height = self.base_picture.size
         for x in range(0, self.width):
             for y in range(0, self.height):
-                r, g, b = self.base_picture.getpixel((x, y))
-                closest_color = colors.closest((r, g, b))
+                r, g, b, a = self.base_picture.getpixel((x, y))
+                closest_color = list(colors.closest((r, g, b, 255)))
+                closest_color[3] = a
                 self.base_picture.putpixel((x, y), tuple(closest_color))
         horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines(True)
         vertical_clicks, vertical_coords_to_draw = self.calculate_number_click_to_draw_lines(False)
@@ -173,35 +162,44 @@ class DrawInEasy:
         else:
             i_increment = self.width
             j_increment = self.height
-        for i in range(0, i_increment, GARTIC_PEN_RADIUS):
+        for i in range(0, i_increment, PEN_RADIUS):
             last_color = None
             previous_j = 0
-            for j in range(0, j_increment, GARTIC_PEN_RADIUS):
+            for j in range(0, j_increment, PEN_RADIUS):
                 if is_horizontal:
                     rgb = self.base_picture.getpixel((j, i))
                 else:
                     rgb = self.base_picture.getpixel((i, j))
                 if j == 0:
-                    last_color = rgb
-                elif rgb != last_color or j >= j_increment - GARTIC_PEN_RADIUS:
-                    number_lines += 1
-                    color_index = colors.gartic_colors.index(last_color)
-                    color_location_click = colors.gartic_colors_location[color_index][self.screen_resolution]
-                    if color_location_click not in array_with_coords:
-                        array_with_coords[color_location_click] = []  # type: list
-                    if is_horizontal:
-                        final_i = i + self.firstPicCoordinates[1]
-                        final_previous_j = previous_j + self.firstPicCoordinates[0]
-                        final_j_to_move = j + self.firstPicCoordinates[0]
-                        array_with_coords[color_location_click].append([(final_previous_j, final_i), (final_j_to_move, final_i)])
+                    if rgb[3] >= 128:  # only draw pixel with more than 50% opacity
+                        last_color = rgb
                     else:
-                        final_i = i + self.firstPicCoordinates[0]
-                        final_previous_j = previous_j + self.firstPicCoordinates[1]
-                        final_j_to_move = j + self.firstPicCoordinates[1]
-                        array_with_coords[color_location_click].append([(final_i, final_previous_j), (final_i, final_j_to_move)])
-                    total_points += final_j_to_move - final_previous_j
+                        last_color = -1
+                elif rgb != last_color or j >= j_increment - PEN_RADIUS:
+                    if last_color != -1 and rgb[:3] != last_color[:3]:
+                        number_lines += 1
+                        final_color = list(last_color)
+                        final_color[3] = 255
+                        color_index = colors.gartic_colors.index(tuple(final_color))
+                        color_location_click = colors.gartic_colors_location[color_index][self.screen_resolution]
+                        if color_location_click not in array_with_coords:
+                            array_with_coords[color_location_click] = []  # type: list
+                        if is_horizontal:
+                            final_i = i + self.firstPicCoordinates[1]
+                            final_previous_j = previous_j + self.firstPicCoordinates[0]
+                            final_j_to_move = j + self.firstPicCoordinates[0]
+                            array_with_coords[color_location_click].append([(final_previous_j, final_i), (final_j_to_move, final_i)])
+                        else:
+                            final_i = i + self.firstPicCoordinates[0]
+                            final_previous_j = previous_j + self.firstPicCoordinates[1]
+                            final_j_to_move = j + self.firstPicCoordinates[1]
+                            array_with_coords[color_location_click].append([(final_i, final_previous_j), (final_i, final_j_to_move)])
+                        total_points += final_j_to_move - final_previous_j
                     previous_j = j
-                    last_color = rgb
+                    if rgb[3] >= 128:
+                        last_color = rgb
+                    else:
+                        last_color = -1
         return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, is_horizontal)
 
     def draw_lines(self, array_with_coords):

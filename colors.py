@@ -1,24 +1,24 @@
 from math import sqrt
 
 gartic_colors = [
-    (0, 0, 0),
-    (255, 255, 255),
-    (1, 116, 32),
-    (17, 176, 60),
-    (176, 112, 28),
-    (255, 193, 38),
-    (102, 102, 102),
-    (170, 170, 170),
-    (105, 21, 6),
-    (255, 0, 19),
-    (153, 0, 78),
-    (255, 0, 143),
-    (0, 80, 205),
-    (38, 201, 255),
-    (150, 65, 18),
-    (255, 120, 41),
-    (203, 90, 87),
-    (254, 175, 168),
+    (0, 0, 0, 255),
+    (255, 255, 255, 255),
+    (1, 116, 32, 255),
+    (17, 176, 60, 255),
+    (176, 112, 28, 255),
+    (255, 193, 38, 255),
+    (102, 102, 102, 255),
+    (170, 170, 170, 255),
+    (105, 21, 6, 255),
+    (255, 0, 19, 255),
+    (153, 0, 78, 255),
+    (255, 0, 143, 255),
+    (0, 80, 205, 255),
+    (38, 201, 255, 255),
+    (150, 65, 18, 255),
+    (255, 120, 41, 255),
+    (203, 90, 87, 255),
+    (254, 175, 168, 255),
 ]
 
 gartic_colors_location = {
@@ -80,7 +80,7 @@ gartic_colors_location = {
 
 
 def get_location_white_color(resolution):
-    return get_location_of_color(resolution, (255, 255, 255))
+    return get_location_of_color(resolution, (255, 255, 255, 255))
 
 
 def get_location_of_color(resolution, color):
@@ -89,10 +89,10 @@ def get_location_of_color(resolution, color):
 
 
 def closest(color):
-    r, g, b = color
+    r, g, b, a = color
     color_diffs = []
     for color in gartic_colors:
-        cr, cg, cb = color
+        cr, cg, cb, ca = color
         color_diff = sqrt(abs(r - cr)**2 + abs(g - cg)**2 + abs(b - cb)**2)
         color_diffs.append((color_diff, color))
     return min(color_diffs)[1]
