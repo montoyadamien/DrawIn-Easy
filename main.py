@@ -125,8 +125,8 @@ class DrawInEasy:
                 r, g, b = self.base_picture.getpixel((x, y))
                 closest_color = colors.closest((r, g, b))
                 self.base_picture.putpixel((x, y), tuple(closest_color))
-        horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines_horizontally()
-        vertical_clicks, vertical_coords_to_draw = self.calculate_number_click_to_draw_lines_vertically()
+        horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines(True)
+        vertical_clicks, vertical_coords_to_draw = self.calculate_number_click_to_draw_lines(False)
         if horizontal_clicks <= vertical_clicks:
             print('Drawing horizontal lines will be faster')
             self.draw_lines(horizontal_coords_to_draw)
@@ -153,7 +153,7 @@ class DrawInEasy:
                     points_for_color += coords2[0] - coords1[0]
                 else:
                     points_for_color += coords2[1] - coords1[1]
-            # if the color takes less than 0.5% of the drawing, do not draw those points
+            # if the color takes less than 0.5% of the drawing, do not draw these points
             if (points_for_color / total_points) * 100 < 0.5:
                 number_lines -= coords_len
             else:
@@ -163,57 +163,46 @@ class DrawInEasy:
             final_colors.append(white_values)
         return number_lines, final_colors
 
-    def calculate_number_click_to_draw_lines_horizontally(self):
+    def calculate_number_click_to_draw_lines(self, is_horizontal):
         number_lines = 0
         total_points = 0
         array_with_coords = {}
-        for y in range(0, self.height, GARTIC_PEN_RADIUS):
+        if is_horizontal:
+            i_increment = self.height
+            j_increment = self.width
+        else:
+            i_increment = self.width
+            j_increment = self.height
+        for i in range(0, i_increment, GARTIC_PEN_RADIUS):
             last_color = None
-            previous_x = 0
-            for x in range(0, self.width, GARTIC_PEN_RADIUS):
-                rgb = self.base_picture.getpixel((x, y))
-                if x == 0:
+            previous_j = 0
+            for j in range(0, j_increment, GARTIC_PEN_RADIUS):
+                if is_horizontal:
+                    rgb = self.base_picture.getpixel((j, i))
+                else:
+                    rgb = self.base_picture.getpixel((i, j))
+                if j == 0:
                     last_color = rgb
-                elif rgb != last_color or x >= self.width - GARTIC_PEN_RADIUS:
+                elif rgb != last_color or j >= j_increment - GARTIC_PEN_RADIUS:
                     number_lines += 1
                     color_index = colors.gartic_colors.index(last_color)
                     color_location_click = colors.gartic_colors_location[color_index][self.screen_resolution]
-                    final_y = y + self.firstPicCoordinates[1]
-                    final_previous_x = previous_x + self.firstPicCoordinates[0]
-                    final_x_to_move = x + self.firstPicCoordinates[0]
                     if color_location_click not in array_with_coords:
                         array_with_coords[color_location_click] = []  # type: list
-                    total_points += final_x_to_move - final_previous_x
-                    array_with_coords[color_location_click].append([(final_previous_x, final_y), (final_x_to_move, final_y)])
-                    previous_x = x
+                    if is_horizontal:
+                        final_i = i + self.firstPicCoordinates[1]
+                        final_previous_j = previous_j + self.firstPicCoordinates[0]
+                        final_j_to_move = j + self.firstPicCoordinates[0]
+                        array_with_coords[color_location_click].append([(final_previous_j, final_i), (final_j_to_move, final_i)])
+                    else:
+                        final_i = i + self.firstPicCoordinates[0]
+                        final_previous_j = previous_j + self.firstPicCoordinates[1]
+                        final_j_to_move = j + self.firstPicCoordinates[1]
+                        array_with_coords[color_location_click].append([(final_i, final_previous_j), (final_i, final_j_to_move)])
+                    total_points += final_j_to_move - final_previous_j
+                    previous_j = j
                     last_color = rgb
-        return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, True)
-
-    def calculate_number_click_to_draw_lines_vertically(self):
-        number_lines = 0
-        total_points = 0
-        array_with_coords = {}
-        for x in range(0, self.width, GARTIC_PEN_RADIUS):
-            last_color = None
-            previous_y = 0
-            for y in range(0, self.height, GARTIC_PEN_RADIUS):
-                rgb = self.base_picture.getpixel((x, y))
-                if y == 0:
-                    last_color = rgb
-                elif rgb != last_color or y >= self.height - GARTIC_PEN_RADIUS:
-                    number_lines += 1
-                    color_index = colors.gartic_colors.index(last_color)
-                    color_location_click = colors.gartic_colors_location[color_index][self.screen_resolution]
-                    final_x = x + self.firstPicCoordinates[0]
-                    final_previous_y = previous_y + self.firstPicCoordinates[1]
-                    final_y_to_move = y + self.firstPicCoordinates[1]
-                    if color_location_click not in array_with_coords:
-                        array_with_coords[color_location_click] = []  # type: list
-                    total_points += final_y_to_move - final_previous_y
-                    array_with_coords[color_location_click].append([(final_x, final_previous_y), (final_x, final_y_to_move)])
-                    previous_y = y
-                    last_color = rgb
-        return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, False)
+        return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, is_horizontal)
 
     def draw_lines(self, array_with_coords):
         for location_click in array_with_coords:
