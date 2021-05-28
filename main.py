@@ -174,9 +174,9 @@ class DrawInEasy:
                     if rgb[3] >= 128:  # only draw pixel with more than 50% opacity
                         last_color = rgb
                     else:
-                        last_color = -1
-                elif rgb != last_color or j >= j_increment - PEN_RADIUS:
-                    if last_color != -1 and rgb[:3] != last_color[:3]:
+                        last_color = None
+                elif rgb != last_color or j >= (j_increment - (PEN_RADIUS * 2)):
+                    if last_color is not None:
                         number_lines += 1
                         final_color = list(last_color)
                         final_color[3] = 255
@@ -199,7 +199,7 @@ class DrawInEasy:
                     if rgb[3] >= 128:
                         last_color = rgb
                     else:
-                        last_color = -1
+                        last_color = None
         return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, is_horizontal)
 
     def draw_lines(self, array_with_coords):
