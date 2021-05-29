@@ -5,6 +5,7 @@ from pynput.mouse import Controller, Button
 from pynput import mouse
 import time
 from screeninfo import get_monitors
+from commons import GAMES
 
 mouse_controller = Controller()
 
@@ -22,6 +23,7 @@ resolutions = [
 class DrawInEasy:
     currentState = NO_STATE
     screen_resolution = None
+    game = None
 
     firstPicCoordinates = None
     secondPicCoordinates = None
@@ -32,7 +34,15 @@ class DrawInEasy:
     height = None
 
     def __init__(self):
-        self.enter_resolution()
+        self.enter_game()
+
+    def enter_game(self):
+        print('-> Enter the game -', GAMES)
+        self.game = input()
+        if self.game not in GAMES:
+            print('Error -> only games', GAMES, 'are allowed')
+        else:
+            self.enter_resolution()
 
     def enter_resolution(self):
         main_monitor = get_monitors()[0]
@@ -79,11 +89,11 @@ class DrawInEasy:
         picture_link = input()
         if self.is_url_image(picture_link):
             self.base_picture = Image.open(requests.get(picture_link, stream=True).raw)
-            print('-> Choose in Gartic Phone workplan the first point to start drawing (top left corner of the picture)')
+            print('-> Choose in workplan the first point to start drawing (top left corner of the picture)')
             self.currentState = FIRST_POINT_STATE
             with mouse.Listener(on_click=self.on_click) as listener:
                 listener.join()
-            print('-> Choose in Gartic Phone workplan the second point to end drawing (bottom right corner of the picture)')
+            print('-> Choose in workplan the second point to end drawing (bottom right corner of the picture)')
             self.currentState = SECOND_POINT_STATE
             with mouse.Listener(on_click=self.on_click) as listener:
                 listener.join()
@@ -111,7 +121,7 @@ class DrawInEasy:
         for x in range(0, self.width):
             for y in range(0, self.height):
                 r, g, b, a = self.base_picture.getpixel((x, y))
-                closest_color = list(colors.closest((r, g, b, 255)))
+                closest_color = list(colors.closest((r, g, b, 255), self.game))
                 closest_color[3] = a
                 self.base_picture.putpixel((x, y), tuple(closest_color))
         horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines(True)
@@ -125,7 +135,7 @@ class DrawInEasy:
 
     def extract_number_lines_and_lines_to_draw(self, array_with_coords, number_lines, total_points, is_horizontal):
         final_colors = []  # type: list[tuple]
-        white_coords = colors.get_location_white_color(self.screen_resolution)
+        white_coords = colors.get_location_white_color(self.screen_resolution, self.game)
         white_values = None
         if white_coords in array_with_coords:
             white_values = (white_coords, array_with_coords[white_coords])
@@ -180,8 +190,8 @@ class DrawInEasy:
                         number_lines += 1
                         final_color = list(last_color)
                         final_color[3] = 255
-                        color_index = colors.gartic_colors.index(tuple(final_color))
-                        color_location_click = colors.gartic_colors_location[color_index][self.screen_resolution]
+                        color_location_click = colors.get_location_of_color(self.screen_resolution, tuple(final_color),
+                                                                            self.game)
                         if color_location_click not in array_with_coords:
                             array_with_coords[color_location_click] = []  # type: list
                         if is_horizontal:
