@@ -1,6 +1,15 @@
 from math import sqrt
 from commons import GAME_GARTIC, GAME_SKRIBBL
 
+pen_location = {
+    GAME_GARTIC: {
+        '2560x1440': (699, 1249),
+    },
+    GAME_SKRIBBL: {
+        '2560x1440': (1354, 908),
+    }
+}
+
 colors = {
     GAME_GARTIC: [
         (0, 0, 0, 255),
@@ -174,6 +183,10 @@ colors_location = {
         },
     }
 }
+
+
+def get_pen_location(resolution, game):
+    return pen_location[game][resolution]
 
 
 def get_location_white_color(resolution, game):

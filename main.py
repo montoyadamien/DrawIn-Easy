@@ -152,8 +152,8 @@ class DrawInEasy:
                     points_for_color += coords2[0] - coords1[0]
                 else:
                     points_for_color += coords2[1] - coords1[1]
-            # if the color takes less than 0.5% of the drawing, do not draw these points
-            if (points_for_color / total_points) * 100 < 0.5:
+            # if the color takes less than 1% of the drawing, do not draw these points
+            if (points_for_color / total_points) * 100 < 1:
                 number_lines -= coords_len
             else:
                 final_colors.append((key, array_with_coords[key]))
@@ -213,6 +213,9 @@ class DrawInEasy:
         return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, is_horizontal)
 
     def draw_lines(self, array_with_coords):
+        mouse_controller.position = colors.get_pen_location(self.screen_resolution, self.game)
+        mouse_controller.press(Button.left)
+        mouse_controller.release(Button.left)
         for location_click in array_with_coords:
             print('Drawing the color', location_click[0], '...')
             mouse_controller.position = location_click[0]
@@ -222,12 +225,10 @@ class DrawInEasy:
             for locations in lines:
                 loc1 = locations[0]
                 loc2 = locations[1]
-                y_move = loc2[1] - loc1[1]
-                x_move = loc2[0] - loc1[0]
                 mouse_controller.position = loc1
                 mouse_controller.press(Button.left)
                 time.sleep(0.002)
-                mouse_controller.move(x_move, y_move)
+                mouse_controller.move(loc2[0] - loc1[0], loc2[1] - loc1[1])
                 time.sleep(0.002)
                 mouse_controller.release(Button.left)
 
