@@ -127,10 +127,8 @@ class DrawInEasy:
         horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines(True)
         vertical_clicks, vertical_coords_to_draw = self.calculate_number_click_to_draw_lines(False)
         if horizontal_clicks <= vertical_clicks:
-            print('Drawing horizontal lines will be faster')
             self.draw_lines(horizontal_coords_to_draw)
         else:
-            print('Drawing vertical lines will be faster')
             self.draw_lines(vertical_coords_to_draw)
 
     def extract_number_lines_and_lines_to_draw(self, array_with_coords, number_lines, total_points, is_horizontal):
@@ -152,8 +150,8 @@ class DrawInEasy:
                     points_for_color += coords2[0] - coords1[0]
                 else:
                     points_for_color += coords2[1] - coords1[1]
-            # if the color takes less than 1% of the drawing, do not draw these points
-            if (points_for_color / total_points) * 100 < 1:
+            # if the color takes less than 1.5% of the drawing, do not draw these points
+            if (points_for_color / total_points) * 100 < 1.5:
                 number_lines -= coords_len
             else:
                 final_colors.append((key, array_with_coords[key]))
@@ -185,7 +183,7 @@ class DrawInEasy:
                         last_color = rgb
                     else:
                         last_color = None
-                elif rgb != last_color or j >= (j_increment - (PEN_RADIUS * 2)):
+                elif rgb != last_color or j >= (j_increment - PEN_RADIUS):
                     if last_color is not None:
                         number_lines += 1
                         final_color = list(last_color)
@@ -217,7 +215,6 @@ class DrawInEasy:
         mouse_controller.press(Button.left)
         mouse_controller.release(Button.left)
         for location_click in array_with_coords:
-            print('Drawing the color', location_click[0], '...')
             mouse_controller.position = location_click[0]
             mouse_controller.press(Button.left)
             mouse_controller.release(Button.left)
@@ -227,9 +224,9 @@ class DrawInEasy:
                 loc2 = locations[1]
                 mouse_controller.position = loc1
                 mouse_controller.press(Button.left)
-                time.sleep(0.002)
+                time.sleep(0.001)
                 mouse_controller.move(loc2[0] - loc1[0], loc2[1] - loc1[1])
-                time.sleep(0.002)
+                time.sleep(0.001)
                 mouse_controller.release(Button.left)
 
 if __name__ == '__main__':
