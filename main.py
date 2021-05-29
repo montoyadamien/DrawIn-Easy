@@ -5,7 +5,8 @@ from pynput.mouse import Controller, Button
 from pynput import mouse
 import time
 from screeninfo import get_monitors
-from commons import GAMES
+from commons import GAMES, get_game_name
+import sys
 
 mouse_controller = Controller()
 
@@ -18,6 +19,8 @@ PEN_RADIUS = 3
 resolutions = [
     '2560x1440'
 ]
+
+verbose = False
 
 
 class DrawInEasy:
@@ -33,6 +36,8 @@ class DrawInEasy:
     width = None
     height = None
 
+    time_start = None
+
     def __init__(self):
         self.enter_game()
 
@@ -42,12 +47,14 @@ class DrawInEasy:
         if self.game not in GAMES:
             print('Error -> only games', GAMES, 'are allowed')
         else:
+            if verbose:
+                print('# Currently playing', get_game_name(self.game))
             self.enter_resolution()
 
     def enter_resolution(self):
         main_monitor = get_monitors()[0]
         self.screen_resolution = str(main_monitor.width) + 'x' + str(main_monitor.height)
-        print('-> Getting your main screen resolution -', self.screen_resolution)
+        print('# Getting your main screen resolution -', self.screen_resolution)
         if self.screen_resolution not in resolutions:
             exit('Error -> your screen resolution must be in ' + str(resolutions))
         else:
@@ -82,6 +89,7 @@ class DrawInEasy:
         self.points_to_draw = None
         self.width = None
         self.height = None
+        self.time_start = None
 
     def load_picture(self):
         self.reset_state()
@@ -111,7 +119,9 @@ class DrawInEasy:
                or (self.base_picture.mode == 'P' and 'transparency' in self.base_picture.info)
 
     def pre_draw_picture(self):
-        print('Making calculations with your picture, please wait...')
+        if verbose:
+            print('# Making calculations with your picture, please wait...')
+            self.time_start = time.time()
         if not self.is_picture_contains_transparency():  # force the type to be rgba and using a 3pixel-alpha tuple
             self.base_picture = self.base_picture.convert('RGBA')
         width = self.secondPicCoordinates[0] - self.firstPicCoordinates[0]
@@ -127,8 +137,12 @@ class DrawInEasy:
         horizontal_clicks, horizontal_coords_to_draw = self.calculate_number_click_to_draw_lines(True)
         vertical_clicks, vertical_coords_to_draw = self.calculate_number_click_to_draw_lines(False)
         if horizontal_clicks <= vertical_clicks:
+            if verbose:
+                print('# Drawing ', str(horizontal_clicks), ' horizontal lines will be faster')
             self.draw_lines(horizontal_coords_to_draw)
         else:
+            if verbose:
+                print('# Drawing ', str(horizontal_clicks), ' vertical lines will be faster')
             self.draw_lines(vertical_coords_to_draw)
 
     def extract_number_lines_and_lines_to_draw(self, array_with_coords, number_lines, total_points, is_horizontal):
@@ -211,10 +225,14 @@ class DrawInEasy:
         return self.extract_number_lines_and_lines_to_draw(array_with_coords, number_lines, total_points, is_horizontal)
 
     def draw_lines(self, array_with_coords):
+        if verbose:
+            print('# Using little pen')
         mouse_controller.position = colors.get_pen_location(self.screen_resolution, self.game)
         mouse_controller.press(Button.left)
         mouse_controller.release(Button.left)
         for location_click in array_with_coords:
+            if verbose:
+                print('# Drawing a new color')
             mouse_controller.position = location_click[0]
             mouse_controller.press(Button.left)
             mouse_controller.release(Button.left)
@@ -228,6 +246,12 @@ class DrawInEasy:
                 mouse_controller.move(loc2[0] - loc1[0], loc2[1] - loc1[1])
                 time.sleep(0.001)
                 mouse_controller.release(Button.left)
+        if verbose:
+            total_time = time.time() - self.time_start
+            print("# Calculations and drawing took", total_time, "seconds")
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-v' or sys.argv[1] == '--verbose':
+            verbose = True
     DrawInEasy().__init__()
