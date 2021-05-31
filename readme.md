@@ -22,8 +22,9 @@ To run the bot, follow this steps:
 # Bot support
 
 The bot have been tested under Windows 10, but it should also work on Linux.  
-Since the bot needs to be configured for each screen resolution in order to match the click on colors, the supported resolutions are:
+Since the bot needs to be configured for each screen resolution in order to match the click on colors, the supported resolutions (in pixels) are:
 - 2560x1440
+- 1920x1080
 
 More resolutions can be added in the file [colors.py](colors.py).
 

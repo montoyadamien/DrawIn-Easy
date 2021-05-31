@@ -16,10 +16,6 @@ SECOND_POINT_STATE = 2
 
 PEN_RADIUS = 3
 
-resolutions = [
-    '2560x1440'
-]
-
 verbose = False
 
 
@@ -55,8 +51,8 @@ class DrawInEasy:
         main_monitor = get_monitors()[0]
         self.screen_resolution = str(main_monitor.width) + 'x' + str(main_monitor.height)
         print('# Getting your main screen resolution -', self.screen_resolution)
-        if self.screen_resolution not in resolutions:
-            exit('Error -> your screen resolution must be in ' + str(resolutions))
+        if self.screen_resolution not in colors.resolutions:
+            exit('Error -> your screen resolution must be in ' + str(colors.resolutions))
         else:
             while 1:
                 self.load_picture()
