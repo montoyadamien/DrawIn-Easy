@@ -63,7 +63,7 @@ class DrawInEasy:
 
     def is_url_image(self, image_url):
         try:
-            image_formats = ('image/png', 'image/jpeg', 'image/jpg')
+            image_formats = ('image/png', 'image/jpeg', 'image/jpg', 'image/gif')
             r = requests.head(image_url)
             if r.headers['content-type'] in image_formats:
                 return True
@@ -93,7 +93,7 @@ class DrawInEasy:
 
     def load_picture(self):
         self.reset_state()
-        print('-> Enter the picture URL - [.png, .jpg, .jpeg]')
+        print('-> Enter the picture URL - [.png, .jpg, .jpeg, .gif]')
         picture_link = input()
         if self.is_url_image(picture_link):
             self.base_picture = Image.open(requests.get(picture_link, stream=True).raw)
@@ -112,7 +112,7 @@ class DrawInEasy:
             else:
                 self.pre_draw_picture()
         else:
-            print('Error -> only png, jpeg and jpg are allowed')
+            print('Error -> only png, gif, jpeg and jpg are allowed')
 
     def is_picture_contains_transparency(self):
         return self.base_picture.mode in ('RGBA', 'LA') \
