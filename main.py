@@ -57,14 +57,21 @@ class DrawInEasy:
             while 1:
                 self.load_picture()
 
-    def is_url_image(self, image_url):
-        try:
-            image_formats = ('image/png', 'image/jpeg', 'image/jpg', 'image/gif')
-            r = requests.head(image_url)
-            if r.headers['content-type'] in image_formats:
+    def is_picture_from_web(self, image_url):
+        for x in ['https://', 'http://', 'www.']:
+            if x in image_url:
                 return True
-            return False
-        except:
+        return False
+
+    def is_mime_type_image(self, picture_mime):
+        image_formats = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif']
+        return picture_mime in image_formats
+
+    def is_url_a_picture(self, image_url):
+        try:
+            r = requests.head(image_url)
+            return self.is_mime_type_image(r.headers['content-type'])
+        except ValueError:
             return False
 
     def on_click(self, x, y, button, pressed):
@@ -89,26 +96,38 @@ class DrawInEasy:
 
     def load_picture(self):
         self.reset_state()
-        print('-> Enter the picture URL - [.png, .jpg, .jpeg, .gif]')
+        print('-> Enter the picture URL (or absolute file path) - [.png, .jpg, .jpeg, .gif]')
         picture_link = input()
-        if self.is_url_image(picture_link):
-            self.base_picture = Image.open(requests.get(picture_link, stream=True).raw)
-            print('-> Choose in workplan the first point to start drawing (top left corner of the picture)')
-            self.currentState = FIRST_POINT_STATE
-            with mouse.Listener(on_click=self.on_click) as listener:
-                listener.join()
-            print('-> Choose in workplan the second point to end drawing (bottom right corner of the picture)')
-            self.currentState = SECOND_POINT_STATE
-            with mouse.Listener(on_click=self.on_click) as listener:
-                listener.join()
-            if self.firstPicCoordinates[0] >= self.secondPicCoordinates[0]:
-                print('Error ->  x1 must be < x2')
-            elif self.firstPicCoordinates[1] >= self.secondPicCoordinates[1]:
-                print('Error -> y1 must be < y2')
+        try:
+            if not self.is_picture_from_web(picture_link):
+                self.base_picture = Image.open(picture_link)
+                if self.is_mime_type_image(Image.MIME[self.base_picture.format]):
+                    self.setup_points()
+                else:
+                    print('Error -> only png, gif, jpeg and jpg are allowed')
+            elif self.is_url_a_picture(picture_link):
+                self.base_picture = Image.open(requests.get(picture_link, stream=True).raw)
+                self.setup_points()
             else:
-                self.pre_draw_picture()
-        else:
+                print('Error -> only png, gif, jpeg and jpg are allowed')
+        except ValueError:
             print('Error -> only png, gif, jpeg and jpg are allowed')
+
+    def setup_points(self):
+        print('-> Choose in workplan the first point to start drawing (top left corner of the picture)')
+        self.currentState = FIRST_POINT_STATE
+        with mouse.Listener(on_click=self.on_click) as listener:
+            listener.join()
+        print('-> Choose in workplan the second point to end drawing (bottom right corner of the picture)')
+        self.currentState = SECOND_POINT_STATE
+        with mouse.Listener(on_click=self.on_click) as listener:
+            listener.join()
+        if self.firstPicCoordinates[0] >= self.secondPicCoordinates[0]:
+            print('Error ->  x1 must be < x2')
+        elif self.firstPicCoordinates[1] >= self.secondPicCoordinates[1]:
+            print('Error -> y1 must be < y2')
+        else:
+            self.pre_draw_picture()
 
     def is_picture_contains_transparency(self):
         return self.base_picture.mode in ('RGBA', 'LA') \
@@ -245,6 +264,7 @@ class DrawInEasy:
         if verbose:
             total_time = time.time() - self.time_start
             print("# Calculations and drawing took", total_time, "seconds")
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
