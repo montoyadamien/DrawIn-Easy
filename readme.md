@@ -1,7 +1,7 @@
 # DrawIn'Easy
 
 DrawIn'Easy is a bot dedicated to the games [Gartic Phone](https://garticphone.com/) and [Skribbl.io](https://skribbl.io/). 
-The bot will draw a picture fetched from an URL in the Gartic Phone or Skribbl.io interface.
+The bot will draw a picture fetched from an URL or the file system in the Gartic Phone or Skribbl.io interface.
 
 # Installation
 
@@ -14,7 +14,7 @@ To run the bot, follow this steps:
 - Be sure to have Python 3.x installed
 - Run `pip install -r requirements.txt`
 - Run `python main.py [-v | --verbose]`
-- When asking for a picture, simply paste an image url
+- When asking for a picture, simply paste an image url or an absolute file path
 - When asking for the first point, just click on the drawing workplan. This point must be the top - left corner where the drawing should start.
 - When asking for the second point, click on the drawing workplan. This second point must be the bottom - right corner where the drawing should end.
 - Wait for some seconds (the larger and detailed the drawing area is, the longer the duration will be) and the bot will automatically choose the right colors to draw between the two points you gave.
